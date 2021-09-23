@@ -1,4 +1,4 @@
-cabal-version:      2.4
+cabal-version:      3.4
 name:               pattie
 version:            0.1.0.0
 
@@ -21,21 +21,36 @@ maintainer:         xetera@top.gg
 -- category:
 extra-source-files: CHANGELOG.md
 
+common shared-properties
+  default-extensions:
+    OverloadedStrings,
+    LambdaCase,
+    NamedFieldPuns
+  build-depends:
+    base ^>=4.14.2.0,
+    megaparsec ^>= 9.1.0,
+    text ^>= 1.2.5.0
+
 executable pattie
-    main-is:          Main.hs
-    default-extensions: OverloadedStrings, LambdaCase, NamedFieldPuns, RecordPuns
+  import: shared-properties
+  main-is:          Main.hs
+  
+  -- Modules included in this executable, other than Main.
+  other-modules: Pattie.Parsing.Data, Pattie.Parsing.DSL, Pattie.Parsing.Parser
+  
+  -- LANGUAGE extensions used by modules in this package.
+  -- other-extensions:
+  hs-source-dirs:   src
+  default-language: Haskell2010
+  ghc-options:
+    -Wall
 
-    -- Modules included in this executable, other than Main.
-    other-modules: Pattie.Parsing.Data, Pattie.Parsing.DSL, Pattie.Parsing.Parser
-
-    -- LANGUAGE extensions used by modules in this package.
-    -- other-extensions:
-    build-depends:    base ^>=4.14.2.0, megaparsec ^>= 9.1.0, text ^>= 1.2.5.0
-    hs-source-dirs:   src
-    default-language: Haskell2010
-
-flag test
-  test-is: Test
-  other-modules: Pattie.Parser.DSL.Test
-  build-depends: QuickCheck, HUnit
-  hs-source-dirs: src, tests
+test-suite spec
+  import: shared-properties
+  type: exitcode-stdio-1.0
+  main-is: Spec.hs
+  other-modules: Pattie.SpecHelper, Pattie.ParserSpec
+  build-depends: hspec >= 2.7, hspec-discover >= 2.7
+  hs-source-dirs: src, test
+  ghc-options:
+    -O0
