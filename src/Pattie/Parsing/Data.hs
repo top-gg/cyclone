@@ -1,13 +1,13 @@
 module Pattie.Parsing.Data where
 
+import Data.List
 import Data.Semigroup (Semigroup)
-import Data.Text
 import qualified Data.Text as T
 import Data.Void
 import Text.Megaparsec (Parsec)
 import Text.Megaparsec.Char
 
-type Parser = Parsec Void Text
+type Parser = Parsec Void T.Text
 
 data DSL
   = Emoji {label :: Maybe T.Text} -- {emoji: emoji}
@@ -25,7 +25,7 @@ instance Show DSL where
     Emoji e -> showLabeled e "Emoji"
     Wildcard w -> showLabeled w "?"
     PlainText text -> T.unpack $ "PlainText: \"" <> text <> "\""
-    _ -> "??"
+    Loop sections -> "Loop: [" <> intercalate ", " (map show sections) <> "]"
 
 data Emoji
   = Native T.Text

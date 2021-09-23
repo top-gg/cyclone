@@ -2,11 +2,9 @@ module Pattie.Parsing.Parser where
 
 import qualified Data.Text as T
 import Data.Void
-import Pattie.Parsing.DSL
 import Pattie.Parsing.Data (DSL (..), ParsedMessage (ParsedMessage), Parser)
 import Text.Megaparsec
 import Text.Megaparsec.Char
-import Text.Megaparsec.Debug (dbg)
 
 type Consumer = Parser [ParsedMessage]
 

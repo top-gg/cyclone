@@ -28,5 +28,5 @@ spec = describe "DSL Parser" $ do
     result `shouldBe` Right [Emoji Nothing, PlainText " **", Wildcard Nothing, PlainText "** ", Emoji Nothing]
 
   it "Should parse placeholders with labels" $ do
-    let result = parseDsl "{a: emoji} {category:?} {b: emoji}"
+    let result = parseDsl "{a: emoji} {category:  ?} {b:emoji}"
     result `shouldBe` Right [Emoji (Just "a"), PlainText " ", Wildcard (Just "category"), PlainText " ", Emoji (Just "b")]

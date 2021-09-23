@@ -8,20 +8,19 @@ import Text.Megaparsec
 
 spec :: Spec
 spec = describe "Parsing DSL patterns" $ do
-  it "Creates parser from basic DSL" $
-    do
-      let emoji = Emoji Nothing
-      let dsl = [emoji, PlainText " **", Wildcard Nothing, PlainText "** ", emoji]
-      let inputText = ":emoji: **HELLO** :emoji2:"
-      let result = parseDsl dsl inputText
-      let expected =
+  it "Creates parser from basic DSL" $ do
+    let emoji = Emoji Nothing
+    let dsl = [emoji, PlainText " **", Wildcard Nothing, PlainText "** ", emoji]
+    let inputText = ":emoji: **HELLO** :emoji2:"
+    let result = parseDsl dsl inputText
+    let expected =
+          Right $
             map
               (uncurry ParsedMessage)
               [ (emoji, "emoji"),
-                ((PlainText " **"), " **"),
-                ((Wildcard Nothing), "HELLO"),
-                ((PlainText "** "), "** "),
+                (PlainText " **", " **"),
+                (Wildcard Nothing, "HELLO"),
+                (PlainText "** ", "** "),
                 (emoji, "emoji2")
               ]
-      result
-        `shouldBe` Right expected
+    result `shouldBe` expected

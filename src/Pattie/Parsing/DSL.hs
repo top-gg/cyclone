@@ -5,7 +5,6 @@ module Pattie.Parsing.DSL (parseDsl, dslParser) where
 
 import qualified Data.Text as T
 import Data.Void
-import Debug.Trace (traceIO, traceId)
 import Pattie.Parsing.Data (DSL (..), Parser)
 import Text.Megaparsec
   ( MonadParsec (eof, takeWhileP, try),
@@ -18,13 +17,14 @@ import Text.Megaparsec
   )
 import Text.Megaparsec.Char
 import Text.Megaparsec.Debug
-import Text.ParserCombinators.ReadP (many1)
 
 variable :: Parser p -> Parser p
 variable = between (char '{') (char '}')
 
 parseMaybeLabel :: Parser (Maybe T.Text)
-parseMaybeLabel = optional $ try (takeWhileP Nothing (/= ':') <* string ":" <* optional spaceChar)
+parseMaybeLabel =
+  let name = takeWhileP Nothing (/= ':')
+   in optional $ try (name <* char ':' <* space)
 
 emoji :: Parser DSL
 emoji = do
