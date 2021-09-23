@@ -6,6 +6,7 @@ import Pattie.Parsing.DSL
 import Pattie.Parsing.Data (DSL (..), Parser)
 import Text.Megaparsec
 import Text.Megaparsec.Char
+import Text.Megaparsec.Debug (dbg)
 
 type Consumer = Parser T.Text
 
@@ -15,11 +16,16 @@ emojiDelimiter = char ':'
 emoji :: Consumer
 emoji = between emojiDelimiter emojiDelimiter (takeWhileP Nothing (/= ':'))
 
-fromDsl :: DSL -> Consumer
-fromDsl = \case
+fromDsl :: [DSL] -> DSL -> Consumer
+fromDsl next = \case
   Emoji -> emoji
   PlainText text -> string text
-  Wildcard {parser} -> parser
+  -- keep consuming input until the next matching input is found
+  Wildcard -> do
+    let nextParser = dslToParser next
+    a <- manyTill anySingle (lookAhead nextParser)
+    return $ T.pack a
 
 dslToParser :: [DSL] -> Consumer
-dslToParser = foldMap fromDsl
+dslToParser [] = mempty
+dslToParser (x : xs) = try $ fromDsl xs x <> dslToParser xs

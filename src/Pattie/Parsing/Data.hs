@@ -11,13 +11,13 @@ type Parser = Parsec Void Text
 data DSL
   = Emoji
   | PlainText T.Text
-  | Wildcard {parser :: Parser T.Text}
+  | Wildcard
 
 instance Show DSL where
   show = \case
     Emoji -> "Emoji"
     PlainText text -> T.unpack $ "PlainText: \"" <> text <> "\""
-    Wildcard _ -> "?"
+    Wildcard -> "?"
 
 data Emoji
   = Native T.Text

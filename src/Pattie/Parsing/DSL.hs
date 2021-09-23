@@ -21,13 +21,7 @@ word :: Parser T.Text
 word = takeWhileP Nothing (== ' ') *> takeWhileP Nothing (/= ' ')
 
 wildcard :: Parser DSL
-wildcard = do
-  string "?"
-  -- a wildcard is parsed until the next non-wildcard word is found in the text
-  nextWord <- lookAhead word
-  -- next letter is the closing brace }
-  let indicator = T.drop 1 nextWord
-  return Wildcard {parser = takeWhileP Nothing (/= indicator `T.index` 0)}
+wildcard = Wildcard <$ string "?"
 
 expression :: Parser DSL
 expression = variable (emoji <|> wildcard)
