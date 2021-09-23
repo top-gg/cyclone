@@ -1,4 +1,4 @@
-module Pattie.SpecHelper
+module Cyclone.SpecHelper
   ( module Test.Hspec,
   )
 where

@@ -1,8 +1,8 @@
-module Pattie.ParserSpec where
+module Cyclone.ParserSpec where
 
 import Control.Exception (evaluate)
-import Pattie.Parsing.Data
-import Pattie.Parsing.Parser
+import Cyclone.Parsing.Data
+import Cyclone.Parsing.Parser
 import Test.Hspec (Spec, describe, it, shouldBe)
 import Text.Megaparsec
 

@@ -1,8 +1,8 @@
-module Pattie.Parsing.Parser where
+module Cyclone.Parsing.Parser where
 
+import Cyclone.Parsing.Data (DSL (..), ParsedMessage (ParsedMessage), Parser)
 import qualified Data.Text as T
 import Data.Void
-import Pattie.Parsing.Data (DSL (..), ParsedMessage (ParsedMessage), Parser)
 import Text.Megaparsec
 import Text.Megaparsec.Char
 

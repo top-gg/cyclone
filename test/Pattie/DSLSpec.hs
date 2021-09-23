@@ -1,8 +1,8 @@
-module Pattie.DSLSpec where
+module Cyclone.DSLSpec where
 
 import Control.Exception (evaluate)
-import Pattie.Parsing.DSL
-import Pattie.Parsing.Data
+import Cyclone.Parsing.DSL
+import Cyclone.Parsing.Data
 import Test.Hspec
   ( Spec,
     anyException,

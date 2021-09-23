@@ -1,11 +1,11 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE RecordWildCards #-}
 
-module Pattie.Parsing.DSL (parseDsl, dslParser) where
+module Cyclone.Parsing.DSL (parseDsl, dslParser) where
 
+import Cyclone.Parsing.Data (DSL (..), Parser)
 import qualified Data.Text as T
 import Data.Void
-import Pattie.Parsing.Data (DSL (..), Parser)
 import Text.Megaparsec
   ( MonadParsec (eof, takeWhileP, try),
     ParseErrorBundle,

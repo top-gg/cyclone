@@ -1,4 +1,4 @@
-module Pattie.Parsing.Data where
+module Cyclone.Parsing.Data where
 
 import Data.List
 import Data.Semigroup (Semigroup)
@@ -10,7 +10,7 @@ import Text.Megaparsec.Char
 type Parser = Parsec Void T.Text
 
 data DSL
-  = Emoji {label :: Maybe T.Text} -- {emoji: emoji}
+  = Emoji {label :: Maybe T.Text} -- {emojiLabel: emoji}
   | PlainText T.Text
   | Wildcard {label :: Maybe T.Text} -- {category: ?}
   | Loop [DSL]

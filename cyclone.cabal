@@ -1,5 +1,5 @@
 cabal-version:      3.4
-name:               pattie
+name:               cyclone
 version:            0.1.0.0
 
 -- A short (one-line) description of the package.
@@ -31,12 +31,12 @@ common shared-properties
     megaparsec ^>= 9.1.0,
     text ^>= 1.2.5.0
 
-executable pattie
+executable cyclone
   import: shared-properties
   main-is:          Main.hs
   
   -- Modules included in this executable, other than Main.
-  other-modules: Pattie.Parsing.Data, Pattie.Parsing.DSL, Pattie.Parsing.Parser
+  other-modules: Cyclone.Parsing.Data, Cyclone.Parsing.DSL, Cyclone.Parsing.Parser
   
   -- LANGUAGE extensions used by modules in this package.
   -- other-extensions:
@@ -49,7 +49,7 @@ test-suite spec
   import: shared-properties
   type: exitcode-stdio-1.0
   main-is: Spec.hs
-  other-modules: Pattie.SpecHelper, Pattie.ParserSpec
+  other-modules: Cyclone.SpecHelper, Cyclone.ParserSpec
   build-depends: hspec >= 2.7, hspec-discover >= 2.7
   hs-source-dirs: src, test
   ghc-options:
