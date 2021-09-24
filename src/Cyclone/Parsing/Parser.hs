@@ -8,29 +8,35 @@ import Text.Megaparsec.Char
 
 type Consumer = Parser [ParsedMessage]
 
-emojiDelimiter :: Parser Char
-emojiDelimiter = char ':'
+colon :: Parser Char
+colon = char ':' <?> "colon (':')"
+
+notColons :: Parser T.Text
+notColons =
+  let tokenLabel = Just "not-colon (not ':')"
+   in takeWhileP tokenLabel (/= ':')
 
 emoji :: Parser T.Text
-emoji = between emojiDelimiter emojiDelimiter (takeWhileP Nothing (/= ':'))
+emoji = colon *> notColons <* colon
 
 fromDsl :: [DSL] -> DSL -> Parser ParsedMessage
 fromDsl next t =
   ParsedMessage t <$> case t of
     Emoji _ -> emoji
     PlainText text -> string text
-    Wildcard _ -> T.pack <$> f
+    Wildcard _ -> T.pack <$> wildcard
       where
         remainingInput = lookAhead (dslToParser next)
-        -- keep consuming input until the rest of the parsers in line succeed
-        f = manyTill anySingle (remainingInput)
-    _ -> ""
+        -- keep consuming characters one-by-one until the rest of the parsers in line all succeed
+        wildcard = manyTill anySingle remainingInput
+    Loop _items -> undefined
 
 dslToParser :: [DSL] -> Consumer
 dslToParser [] = mempty
 dslToParser (x : xs) = do
-  result <- try (fromDsl xs x)
-  (result :) <$> dslToParser xs
+  result <- try $ fromDsl xs x
+  rest <- dslToParser xs
+  return $ result : rest
 
 parseDsl :: [DSL] -> T.Text -> Either (ParseErrorBundle T.Text Void) [ParsedMessage]
 parseDsl dsl = parse (dslToParser dsl) ""

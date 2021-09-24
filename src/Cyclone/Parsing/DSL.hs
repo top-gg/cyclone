@@ -1,15 +1,18 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE RecordWildCards #-}
 
-module Cyclone.Parsing.DSL (parseDsl, dslParser) where
+module Cyclone.Parsing.DSL (parseDsl, dslParser, innerLoop) where
 
+import Control.Applicative hiding (many, some)
+import Control.Monad
 import Cyclone.Parsing.Data (DSL (..), Parser)
 import qualified Data.Text as T
 import Data.Void
 import Text.Megaparsec
-  ( MonadParsec (eof, takeWhileP, try),
+  ( MonadParsec (eof, lookAhead, takeWhileP, try),
     ParseErrorBundle,
     between,
+    many,
     manyTill,
     optional,
     parse,
@@ -41,11 +44,28 @@ wildcard = do
 expression :: Parser DSL
 expression = variable (try emoji <|> try wildcard)
 
+innerLoop :: Parser [DSL]
+innerLoop = dslParser
+
+dslContent :: Parser a -> Parser [DSL]
+dslContent = manyTill (loop <|> expression <|> plainText)
+
+loop :: Parser DSL
+loop = do
+  void loopMarker
+  space
+  content <- dslContent (lookAhead . try $ space *> loopMarker)
+  space
+  void loopMarker
+  return $ Loop content
+  where
+    loopMarker = string "@loop"
+
 plainText :: Parser DSL
 plainText = PlainText <$> takeWhileP Nothing (/= '{')
 
 dslParser :: Parser [DSL]
-dslParser = manyTill (expression <|> plainText) eof
+dslParser = dslContent eof
 
 parseDsl :: T.Text -> Either (ParseErrorBundle T.Text Void) [DSL]
 parseDsl = parse dslParser ""
