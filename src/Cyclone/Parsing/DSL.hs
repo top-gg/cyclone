@@ -34,8 +34,8 @@ listParser = do
 withLabel :: Parser LabeledVariable -> Parser DSL
 withLabel parser = do
   binding <- parseMaybeLabel
-  parsed <- parser
-  return $ Labeled parsed binding
+  object <- parser
+  return $ Labeled object binding
 
 emoji :: Parser LabeledVariable
 emoji = Emoji <$ string "emoji"

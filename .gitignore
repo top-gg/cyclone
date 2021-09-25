@@ -1,2 +1,3 @@
 dist-newstyle
 .vscode
+.env

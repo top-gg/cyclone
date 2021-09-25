@@ -15,13 +15,10 @@ import Text.Megaparsec
     anySingle,
     many,
     manyTill,
-    oneOf,
-    optional,
     parse,
-    satisfy,
     (<|>),
   )
-import Text.Megaparsec.Char (alphaNumChar, char, space, string)
+import Text.Megaparsec.Char (alphaNumChar, char, string)
 
 type Consumer = Parser [ParsedMessage]
 

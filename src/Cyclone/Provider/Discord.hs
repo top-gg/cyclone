@@ -1,20 +1,16 @@
 module Cyclone.Provider.Discord (runDiscordBot) where
 
-import Control.Monad (when)
 import Control.Monad.IO.Class
 import Cyclone.Parsing.DSL (parseDsl)
 import Cyclone.Parsing.Data
 import Cyclone.Parsing.Parser
-import Data.Either (fromLeft, fromRight)
-import Data.Maybe (fromJust, fromMaybe)
-import Data.Text (Text, isPrefixOf, toLower)
+import Data.Either (fromRight)
 import qualified Data.Text as T
 import qualified Data.Text.IO as TIO
 import Discord
 import Discord.Requests (MessageDetailedOpts (messageDetailedReference), messageDetailedContent)
 import qualified Discord.Requests as R
 import Discord.Types hiding (Emoji)
-import UnliftIO.Concurrent
 
 messagePattern :: T.Text
 messagePattern =
@@ -24,6 +20,7 @@ messagePattern =
   \{?}\n\
   \@loop"
 
+messagePatternDsl :: [DSL]
 messagePatternDsl = fromRight (error "invalid pattern") $ parseDsl messagePattern
 
 runDiscordBot :: T.Text -> IO ()
@@ -44,7 +41,7 @@ eventHandler event = case event of
     liftIO $ TIO.putStrLn (messageText m)
     case findClone m of
       Nothing -> pure ()
-      Just parts -> do
+      Just _ -> do
         let channelId = messageChannel m
         let reply =
               R.CreateMessageDetailed channelId $
@@ -56,14 +53,8 @@ eventHandler event = case event of
         pure ()
   _ -> pure ()
 
-fromBot :: Message -> Bool
-fromBot m = userIsBot (messageAuthor m)
-
 findClone :: Message -> Maybe [ParsedMessage]
 findClone message = either (const Nothing) Just parts
   where
     builtPattern = fromRight [] $ parseDsl messagePattern
     parts = parseMessageContent builtPattern $ messageText message
-
-isPing :: Text -> Bool
-isPing = ("ping" `isPrefixOf`) . toLower
