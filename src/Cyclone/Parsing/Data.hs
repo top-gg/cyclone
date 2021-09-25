@@ -27,7 +27,8 @@ instance Show DSL where
   show = \case
     Labeled Emoji e -> showLabeled e "Emoji"
     Labeled Wildcard w -> showLabeled w "?"
-    Labeled List {delimiter, pattern} w -> showLabeled w "List [" <> "]"
+    -- TODO: show list contents?
+    Labeled (List _ _) w -> showLabeled w "List [" <> "]"
     PlainText text -> T.unpack $ "PlainText: \"" <> text <> "\""
     Loop sections -> "Loop: [" <> intercalate ", " (map show sections) <> "]"
 
@@ -36,4 +37,5 @@ data Emoji
   | DiscordFormat T.Text
   deriving (Show)
 
-data ParsedMessage = ParsedMessage {dsl :: DSL, message :: T.Text} deriving (Show, Eq)
+data ParsedMessage = ParsedMessage {dsl :: DSL, message :: T.Text}
+  deriving (Show, Eq)

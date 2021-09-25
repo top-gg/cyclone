@@ -1,5 +1,4 @@
-{-# LANGUAGE OverloadedStrings #-}
-{-# LANGUAGE RecordWildCards #-}
+{-# OPTIONS_GHC -Wno-unused-top-binds #-}
 
 module Cyclone.Parsing.DSL (parseDsl, dslParser, innerLoop) where
 
@@ -55,6 +54,8 @@ dslContent = manyTill (loop <|> expression <|> plainText)
 loop :: Parser DSL
 loop = do
   void loopMarker
+  -- skip optional whitespace around the loop contents
+  -- TODO: Move this eager space gobbling to `Cyclone.Parsing.Token.skipSpaces`
   space
   content <- dslContent (lookAhead . try $ space *> loopMarker)
   space

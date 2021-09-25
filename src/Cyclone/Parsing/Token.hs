@@ -13,7 +13,7 @@ leftBracket = char '{' <?> "Left Bracket ({)"
 rightBracket :: Parser Char
 rightBracket = char '}' <?> "Right Bracket (})"
 
--- This doesn't work lol unicode is a lie
+-- TODO: This doesn't work lol unicode is a lie
 isUnicodeEmoji :: Char -> Bool
 isUnicodeEmoji c = c >= '\x1F000' && c <= '\x1F9FF'
 

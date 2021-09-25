@@ -6,7 +6,7 @@ import Cyclone.Parsing.Data
     ParsedMessage (ParsedMessage),
     Parser,
   )
-import Cyclone.Parsing.Token
+import Cyclone.Parsing.Token (colon, skipSpaces)
 import qualified Data.Text as T
 import Data.Void (Void)
 import Text.Megaparsec
@@ -30,17 +30,21 @@ notColons =
 betweenColons :: Parser T.Text -> Parser T.Text
 betweenColons a = colon *> a <* colon
 
+-- TODO: add parsing for unicode emojis
 emoji :: Parser T.Text
 emoji = do
   let regularEmoji = betweenColons notColons
   let customDiscordEmoji = char '<' *> regularEmoji <* many alphaNumChar <* char '>'
-  -- let unicodeEmoji = takeWhileP Nothing isUnicodeEmoji
   customDiscordEmoji <|> regularEmoji
 
+-- | A list parser that looks something like {commands: @list(",", "`?`")}
+-- TODO: implement this
 listParser :: T.Text -> T.Text -> Parser T.Text
-listParser delimiter pattern = do
+listParser _delimiter _pattern = do
   undefined
 
+-- | Convert a list of `DSL` tokens into `ParsedMessage` by passing
+-- | the remaining list of tokens that are yet to be parsed
 fromDsl :: [DSL] -> DSL -> Parser [ParsedMessage]
 fromDsl next = \case
   Loop content ->
@@ -49,12 +53,11 @@ fromDsl next = \case
     return . ParsedMessage t <$> listParser delimiter pattern
   t@(Labeled Emoji _) ->
     return . ParsedMessage t <$> emoji
-  t@(Labeled Wildcard _) ->
+  t@(Labeled Wildcard _) -> do
+    let remainingInput = lookAhead (dslToParser next)
+    -- keep consuming characters one-by-one until the rest of the parsers in line all succeed
+    let wildcard = manyTill anySingle remainingInput
     return . ParsedMessage t . T.pack <$> wildcard
-    where
-      remainingInput = lookAhead (dslToParser next)
-      -- keep consuming characters one-by-one until the rest of the parsers in line all succeed
-      wildcard = manyTill anySingle remainingInput
   t@(PlainText text) ->
     return . ParsedMessage t <$> skipSpaces (string text)
 
