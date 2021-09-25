@@ -29,14 +29,16 @@ common shared-properties
   build-depends:
     base ^>=4.14.2.0,
     megaparsec ^>= 9.1.0,
-    text ^>= 1.2.5.0
+    text ^>= 1.2.5.0,
+    discord-haskell ^>= 1.8.8,
+    unliftio ^>= 0.2.20
 
 executable cyclone
   import: shared-properties
   main-is:          Main.hs
   
   -- Modules included in this executable, other than Main.
-  other-modules: Cyclone.Parsing.Data, Cyclone.Parsing.DSL, Cyclone.Parsing.Parser
+  other-modules: Cyclone.Parsing.Data, Cyclone.Parsing.DSL, Cyclone.Parsing.Parser, Cyclone.Provider.Discord
   
   -- LANGUAGE extensions used by modules in this package.
   -- other-extensions:

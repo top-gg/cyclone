@@ -3,46 +3,48 @@
 
 module Cyclone.Parsing.DSL (parseDsl, dslParser, innerLoop) where
 
-import Control.Applicative hiding (many, some)
-import Control.Monad
-import Cyclone.Parsing.Data (DSL (..), Parser)
+import Control.Monad (void)
+import Cyclone.Parsing.Data (DSL (..), LabeledVariable (Emoji, Wildcard), Parser)
+import Cyclone.Parsing.Token
 import qualified Data.Text as T
-import Data.Void
+import Data.Void (Void)
 import Text.Megaparsec
   ( MonadParsec (eof, lookAhead, takeWhileP, try),
     ParseErrorBundle,
     between,
-    many,
     manyTill,
     optional,
     parse,
     (<|>),
   )
-import Text.Megaparsec.Char
-import Text.Megaparsec.Debug
+import Text.Megaparsec.Char (char, space, string)
 
 variable :: Parser p -> Parser p
-variable = between (char '{') (char '}')
+variable = between leftBracket rightBracket
 
 parseMaybeLabel :: Parser (Maybe T.Text)
 parseMaybeLabel =
   let name = takeWhileP Nothing (/= ':')
    in optional $ try (name <* char ':' <* space)
 
-emoji :: Parser DSL
-emoji = do
-  label <- parseMaybeLabel
-  _ <- string "emoji"
-  return $ Emoji {label}
+listParser :: Parser LabeledVariable
+listParser = do
+  undefined
 
-wildcard :: Parser DSL
-wildcard = do
-  label <- parseMaybeLabel
-  _ <- string "?"
-  return $ Wildcard {label}
+withLabel :: Parser LabeledVariable -> Parser DSL
+withLabel parser = do
+  binding <- parseMaybeLabel
+  parsed <- parser
+  return $ Labeled parsed binding
+
+emoji :: Parser LabeledVariable
+emoji = Emoji <$ string "emoji"
+
+wildcard :: Parser LabeledVariable
+wildcard = Wildcard <$ string "?"
 
 expression :: Parser DSL
-expression = variable (try emoji <|> try wildcard)
+expression = variable (try (withLabel emoji) <|> try (withLabel wildcard))
 
 innerLoop :: Parser [DSL]
 innerLoop = dslParser
@@ -62,7 +64,7 @@ loop = do
     loopMarker = string "@loop"
 
 plainText :: Parser DSL
-plainText = PlainText <$> takeWhileP Nothing (/= '{')
+plainText = PlainText <$> takeWhileP Nothing (\c -> c /= '{' && c /= '@')
 
 dslParser :: Parser [DSL]
 dslParser = dslContent eof

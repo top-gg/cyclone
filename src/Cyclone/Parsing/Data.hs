@@ -1,19 +1,22 @@
 module Cyclone.Parsing.Data where
 
-import Data.List
-import Data.Semigroup (Semigroup)
+import Data.List (intercalate)
 import qualified Data.Text as T
-import Data.Void
+import Data.Void (Void)
 import Text.Megaparsec (Parsec)
-import Text.Megaparsec.Char
 
 type Parser = Parsec Void T.Text
 
+data LabeledVariable
+  = Emoji
+  | Wildcard
+  | List {delimiter :: T.Text, pattern :: T.Text}
+  deriving (Eq)
+
 data DSL
-  = Emoji {label :: Maybe T.Text} -- {emojiLabel: emoji}
-  | PlainText T.Text
-  | Wildcard {label :: Maybe T.Text} -- {category: ?}
+  = PlainText T.Text
   | Loop [DSL]
+  | Labeled LabeledVariable (Maybe T.Text)
   deriving (Eq)
 
 showLabeled :: Maybe T.Text -> String -> String
@@ -22,8 +25,9 @@ showLabeled (Just label) a = T.unpack label <> ": " <> a
 
 instance Show DSL where
   show = \case
-    Emoji e -> showLabeled e "Emoji"
-    Wildcard w -> showLabeled w "?"
+    Labeled Emoji e -> showLabeled e "Emoji"
+    Labeled Wildcard w -> showLabeled w "?"
+    Labeled List {delimiter, pattern} w -> showLabeled w "List [" <> "]"
     PlainText text -> T.unpack $ "PlainText: \"" <> text <> "\""
     Loop sections -> "Loop: [" <> intercalate ", " (map show sections) <> "]"
 

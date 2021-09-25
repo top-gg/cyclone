@@ -15,14 +15,14 @@ import Text.Megaparsec
 
 spec :: Spec
 spec = describe "DSL Parser" $ do
-  let surroundedWilcardDsl = [Emoji Nothing, PlainText " **", Wildcard Nothing, PlainText "** ", Emoji Nothing]
+  let surroundedWilcardDsl = [Labeled Emoji Nothing, PlainText " **", Labeled Wildcard Nothing, PlainText "** ", Labeled Emoji Nothing]
   it "Should parse wildcards" $ do
     let result = parseDsl "{?}"
-    result `shouldBe` Right [Wildcard Nothing]
+    result `shouldBe` Right [Labeled Wildcard Nothing]
 
   it "Should parse emojis" $ do
     let result = parseDsl "{emoji}"
-    result `shouldBe` Right [Emoji Nothing]
+    result `shouldBe` Right [Labeled Emoji Nothing]
 
   it "Should parse a simple emoji pattern" $ do
     let result = parseDsl "{emoji} **{?}** {emoji}"
@@ -30,12 +30,13 @@ spec = describe "DSL Parser" $ do
 
   it "Should parse placeholders with labels" $ do
     let result = parseDsl "{a: emoji} {category:  ?} {b:emoji}"
-    result `shouldBe` Right [Emoji (Just "a"), PlainText " ", Wildcard (Just "category"), PlainText " ", Emoji (Just "b")]
+    result `shouldBe` Right [Labeled Emoji (Just "a"), PlainText " ", Labeled Wildcard (Just "category"), PlainText " ", Labeled Emoji (Just "b")]
 
   it "Should parse loops" $ do
     let result =
           parseDsl
-            "@loop\
-            \{emoji} **{?}** {emoji}\
+            "Help:\n\
+            \@loop\n\
+            \{emoji} **{?}** {emoji}\n\
             \@loop"
-    result `shouldBe` Right [Loop surroundedWilcardDsl]
+    result `shouldBe` Right [PlainText "Help:\n", Loop surroundedWilcardDsl]
