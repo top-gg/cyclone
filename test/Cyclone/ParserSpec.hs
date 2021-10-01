@@ -31,12 +31,19 @@ spec = describe "Parser generator" $ do
   -- it "parses unicode emojis" $ do
   --   parseMessageContent [emoji] "⚠" `shouldBe` Right [ParsedMessage emoji "⚠️"]
 
+  let newline = PlainText "\n"
+  let emojis = [emoji, emoji, emoji]
+  let loopBaseDsl = [Loop (intersperse newline emojis)]
   it "full parses looped messages" $ do
-    let newline = PlainText "\n"
-    let emojis = [emoji, emoji, emoji]
-    let dsl = [Loop (intersperse newline emojis)]
     let result = intersperse (ParsedMessage newline "\n") $ map (`ParsedMessage` emojiName) emojis
-    parseMessageContent dsl (emojiStr <> "\n" <> emojiStr <> "\n" <> emojiStr) `shouldBe` Right result
+    parseMessageContent loopBaseDsl (emojiStr <> "\n" <> emojiStr <> "\n" <> emojiStr) `shouldBe` Right result
+
+  it "Should parse loops" $ do
+    let finalTestString = PlainText "\ntest"
+    let twoEmojis = [emoji, emoji]
+    let dsl = [Loop (intersperse newline twoEmojis)] <> [finalTestString]
+    let result = (intersperse (ParsedMessage newline "\n") $ map (`ParsedMessage` emojiName) twoEmojis) <> [ParsedMessage finalTestString "\ntest"]
+    parseMessageContent dsl (emojiStr <> "\n" <> emojiStr <> "\ntest") `shouldBe` Right result
 
 -- it "parses discord message" $ do
 --   let messagePattern =
