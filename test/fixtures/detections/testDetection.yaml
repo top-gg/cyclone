@@ -1,0 +1,12 @@
+name: Jisoo Bot
+detections:
+  - name: Identical help command
+    input: "{prefix}help"
+    matcher:
+      type: embed
+      title: Welcome to my help menu, here are my commands
+      description: |
+        Commands:
+        @loop
+        {emoji} **{category: ?}** {emoji}
+        @loop

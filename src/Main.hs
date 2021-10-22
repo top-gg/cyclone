@@ -17,8 +17,5 @@ main :: IO ()
 main = do
   maybeToken <- getEnvSafe "CYCLONE_TOKEN"
   case maybeToken of
-    Nothing -> do
-      putStrLn "Missing environment variable 'CYCLONE_TOKEN'"
-      exitFailure
-    Just txt -> do
-      runDiscordBot txt
+    Nothing -> putStrLn "Missing environment variable 'CYCLONE_TOKEN'" >> exitFailure
+    Just txt -> runDiscordBot txt

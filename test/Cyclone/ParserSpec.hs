@@ -1,14 +1,11 @@
 module Cyclone.ParserSpec where
 
 import Control.Exception (evaluate)
-import Cyclone.Parsing.DSL
 import Cyclone.Parsing.Data
 import Cyclone.Parsing.Parser
 import Data.Either
 import Data.List
-import Data.Maybe
 import Test.Hspec (Spec, describe, it, shouldBe, shouldSatisfy)
-import Text.Megaparsec
 
 spec :: Spec
 spec = describe "Parser generator" $ do
