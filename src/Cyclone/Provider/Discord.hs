@@ -1,5 +1,6 @@
 module Cyclone.Provider.Discord (runDiscordBot, DiscordContext (..)) where
 
+import Control.Monad
 import Control.Monad.IO.Class
 import Cyclone.Helper
 import Cyclone.Parsing.DSL (parseDsl)
@@ -33,12 +34,13 @@ eventHandler configs = \case
   _ -> pure ()
 
 onMessageCreate :: [BotConfig] -> Message -> DiscordHandler ()
-onMessageCreate configs m = do
-  liftIO $ TIO.putStrLn (messageText m)
-  let embeds = messageEmbeds m
-  if not (null embeds)
-    then liftIO $ print embeds
-    else pure ()
+onMessageCreate configs message = do
+  let user = messageAuthor message
+  when (userIsBot user) $ do
+    checkForClones configs message
+
+checkForClones :: [BotConfig] -> Message -> DiscordHandler ()
+checkForClones configs m =
   case findClone m configs of
     Nothing -> pure ()
     Just (config, detection) -> do
