@@ -70,5 +70,8 @@ dslToParser (x : xs) = do
 
 type ParseResult = Either (ParseErrorBundle T.Text Void) [ParsedMessage]
 
+-- | Attempt to parse message from an array of Domain Specific Languages
+-- | Strips out leading and trailing whitespace from the incoming message, expects the
+-- | Parser to also ignore the same whitespace restrictions
 parseMessageContent :: [DSL] -> T.Text -> ParseResult
-parseMessageContent dsl = parse (dslToParser dsl) ""
+parseMessageContent dsl message = parse (dslToParser dsl) "" (T.strip message)

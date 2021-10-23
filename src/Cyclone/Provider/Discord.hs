@@ -79,8 +79,8 @@ matchesMessage m matcher =
     -- we're pattern matching the array here to force messages without embeds to fallthrough to MessageMatcher
     (x : xs, _, EmbedMatcher {..}) ->
       -- TODO: match on all embed fields
-      let fields = [\e -> (title, embedAuthor e >>= embedAuthorName)]
-       in any (\e -> runEmbedField title (embedDescription e)) (x : xs)
+      let fields = [\e -> (description, embedAuthor e >>= embedAuthorName)]
+       in any (\e -> runEmbedField description (embedDescription e)) (x : xs)
     (_, text, MessageMatcher {..}) -> isJust $ do
       a <- eitherToMaybe $ parseDsl content
       -- if the parse result is `Right [ParsedMessage]` it must have succeeded parsing

@@ -6,7 +6,5 @@ detections:
       type: embed
       # title: Welcome to my help menu, here are my commands
       description: |
-        Commands:
-        @loop
-        {emoji} **{category: ?}** {emoji}
-        @loop
+        {?}
+        > Check out the [**Dashboard**]({?}) or the [**Live Music Queue**]({?})

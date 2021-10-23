@@ -70,5 +70,7 @@ plainText = PlainText <$> takeWhileP Nothing (\c -> c /= '{' && c /= '@')
 dslParser :: Parser [DSL]
 dslParser = dslContent eof
 
+-- | Turns a YAML text input into a parser.
+-- | Strips all whitespace from the input.
 parseDsl :: T.Text -> Either (ParseErrorBundle T.Text Void) [DSL]
-parseDsl = parse dslParser ""
+parseDsl text = parse dslParser "" (T.strip text)
