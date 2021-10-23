@@ -1,10 +1,11 @@
 name: Musicium
+link: https://github.com/Tomato6966/Musicium
 detections:
   - name: Help command
     input: "{prefix}help"
     matcher:
       type: embed
-      # title: Welcome to my help menu, here are my commands
+      # prefix matchers with {?} to ignore text preceding the one being matched
       description: |
         {?}
-        > Check out the [**Dashboard**]({?}) or the [**Live Music Queue**]({?})
+        > Check out the [**Dashboard**]({dashboardUrl: ?}) or the [**Live Music Queue**]({queueUrl: ?})

@@ -50,17 +50,32 @@ checkForClones configs m =
       let detectionString = prettyPrintMatcher (matcher detection)
       let author = messageAuthor m
       let channelId = messageChannel m
-      let declineLink = "https://top.gg/moderation/decline?id=" <> T.pack (show $ userId author) <> "&" <> "reason=clone|" <> botName
+      let content =
+            mconcat
+              [ "This message matched the detection for ",
+                quote detectionName,
+                " of the bot ",
+                quote botName,
+                "\n",
+                codeblock "yaml" detectionString,
+                "\n",
+                flattenMonoid (buildSourceLink <$> link config),
+                buildDeclineLink (userId author) botName
+              ]
       let reply =
             R.CreateMessageDetailed channelId $
               def
-                { messageDetailedReference =
-                    Just $ def {referenceMessageId = Just $ messageId m},
-                  messageDetailedContent =
-                    "This message matches the detection `" <> detectionName <> "` of `" <> botName <> "`:\n```yaml\n" <> detectionString <> "\n```\n**Decline Link:** " <> declineLink
+                { messageDetailedReference = Just $ def {referenceMessageId = Just $ messageId m},
+                  messageDetailedContent = content
                 }
       _ <- restCall reply
       pure ()
+
+buildSourceLink :: T.Text -> T.Text
+buildSourceLink link = "**Source Link:** <" <> link <> ">\n"
+
+buildDeclineLink :: Snowflake -> T.Text -> T.Text
+buildDeclineLink botId botName = "**Decline Link:** <https://top.gg/moderation/decline?id=" <> T.pack (show botId) <> "&" <> "reason=clone--" <> botName <> ">\n"
 
 -- | Checking if a message matches a yaml detection
 findClone :: Message -> [BotConfig] -> Maybe (BotConfig, Detection)
@@ -80,22 +95,24 @@ matchesMessage m matcher =
   case (messageEmbeds m, messageText m, matcher) of
     -- Matching all fields of an embed, text content is ignored if an embed is present
     -- since embed and content matching are mutually exclusive configurations
-    -- we're pattern matching the array here to force messages without embeds to fallthrough to MessageMatcher
-    (x : xs, _, EmbedMatcher {..}) ->
-      -- TODO: match on all embed fields
-      let fields = [\e -> (description, embedAuthor e >>= embedAuthorName)]
-       in any (\e -> runEmbedField description (embedDescription e)) (x : xs)
+    (embeds, _, EmbedMatcher {..}) ->
+      any (\embed -> all (isEmbedFieldMatching embed) checkedEmbedFields) embeds
+      where
+        -- TODO: match on all embed fields
+        checkedEmbedFields = [\e -> (description, embedDescription e)]
+        isEmbedFieldMatching :: Embed -> (Embed -> (Maybe T.Text, Maybe T.Text)) -> Bool
+        isEmbedFieldMatching embed fetcher = uncurry runEmbedField (fetcher embed)
     (_, text, MessageMatcher {..}) -> isJust $ do
       a <- eitherToMaybe $ parseDsl content
       -- if the parse result is `Right [ParsedMessage]` it must have succeeded parsing
       _ <- eitherToMaybe $ parseMessageContent a text
       return True
-    _ -> False
   where
     -- Runs one parser against one field field of the embed
     runEmbedField :: Maybe T.Text -> Maybe T.Text -> Bool
     runEmbedField rawDsl f = isJust $ do
       -- TODO: don't silently ignore errors converting a raw string to a DSL?
+      -- TODO: create parsers once on startup instead of recreating them for every embed check
       parser <- eitherToMaybe . parseDsl =<< rawDsl
       embedField <- f
       eitherToMaybe $ parseMessageContent parser embedField
