@@ -2,6 +2,7 @@ module Main where
 
 import Control.Exception (try)
 import Cyclone.Provider.Discord
+import Cyclone.Provider.YAML
 import qualified Data.Text as T
 import System.Environment (getEnv)
 import System.Exit (exitFailure)
@@ -16,6 +17,12 @@ getEnvSafe e = do
 main :: IO ()
 main = do
   maybeToken <- getEnvSafe "CYCLONE_TOKEN"
-  case maybeToken of
-    Nothing -> putStrLn "Missing environment variable 'CYCLONE_TOKEN'" >> exitFailure
-    Just txt -> runDiscordBot txt
+  result <- getBotConfigurations
+  case result of
+    Left a -> print a >> exitFailure
+    Right configs -> do
+      putStrLn $ "Starting bot with " <> show (length configs) <> " detection configurations..."
+      print result
+      case maybeToken of
+        Nothing -> putStrLn "Missing environment variable 'CYCLONE_TOKEN'" >> exitFailure
+        Just token -> runDiscordBot DiscordContext {token, configs}

@@ -8,10 +8,10 @@ colon :: Parser Char
 colon = char ':' <?> "colon (':')"
 
 leftBracket :: Parser Char
-leftBracket = char '{' <?> "Left Bracket ({)"
+leftBracket = char '{' <?> "Left Bracket ('{')"
 
 rightBracket :: Parser Char
-rightBracket = char '}' <?> "Right Bracket (})"
+rightBracket = char '}' <?> "Right Bracket ('}')"
 
 -- TODO: This doesn't work lol unicode is a lie
 isUnicodeEmoji :: Char -> Bool

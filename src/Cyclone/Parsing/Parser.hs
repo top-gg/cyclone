@@ -68,5 +68,7 @@ dslToParser (x : xs) = do
   rest <- dslToParser xs
   return $ result <> rest
 
-parseMessageContent :: [DSL] -> T.Text -> Either (ParseErrorBundle T.Text Void) [ParsedMessage]
+type ParseResult = Either (ParseErrorBundle T.Text Void) [ParsedMessage]
+
+parseMessageContent :: [DSL] -> T.Text -> ParseResult
 parseMessageContent dsl = parse (dslToParser dsl) ""

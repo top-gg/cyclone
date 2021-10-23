@@ -27,10 +27,12 @@ common shared-properties
     Cyclone.Parsing.DSL,
     Cyclone.Parsing.Parser,
     Cyclone.Parsing.Token,
-    Cyclone.Provider.YAML
+    Cyclone.Provider.YAML,
+    Cyclone.Helper
 
   default-extensions:
     OverloadedStrings,
+    RecordWildCards,
     LambdaCase,
     NamedFieldPuns,
     DuplicateRecordFields
@@ -43,7 +45,8 @@ common shared-properties
     unliftio ^>= 0.2.20,
     yaml ^>= 0.11.6.0,
     aeson ^>= 2.0.0.0,
-    containers ^>= 0.6.5.1
+    containers ^>= 0.6.5.1,
+    filepath ^>= 1.4.2.1
 
 executable cyclone
   import: shared-properties
@@ -67,7 +70,8 @@ test-suite spec
   other-modules:
     Cyclone.SpecHelper,
     Cyclone.ParserSpec,
-    Cyclone.DSLSpec
+    Cyclone.DSLSpec,
+    Cyclone.YAMLSpec
   build-depends: hspec >= 2.7, hspec-discover >= 2.7
   hs-source-dirs: src, test
   ghc-options:

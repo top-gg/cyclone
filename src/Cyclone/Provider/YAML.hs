@@ -3,6 +3,8 @@
 
 module Cyclone.Provider.YAML
   ( readConfigFile,
+    getBotConfigurations,
+    prettyPrintMatcher,
     BotConfig (..),
     Platform (..),
     Detection (..),
@@ -12,11 +14,14 @@ module Cyclone.Provider.YAML
 where
 
 import Data.Aeson.TH
-import Data.Char (toLower)
-import Data.Map
+import Data.List (isSuffixOf)
+import qualified Data.Map as M
 import qualified Data.Text as T
+import Data.Text.Encoding (decodeUtf8)
 import Data.Yaml
+import Debug.Trace (traceIO, traceShowId)
 import GHC.Generics (Generic)
+import System.FilePath
 import UnliftIO.Directory
 
 data Platform = Discord deriving (Generic, Eq)
@@ -41,7 +46,7 @@ data Detection = Detection
   { name :: T.Text,
     input :: Maybe T.Text,
     matcher :: Matcher,
-    defaults :: Maybe (Map T.Text DefaultTypes)
+    defaults :: Maybe (M.Map T.Text DefaultTypes)
   }
   deriving (Show, Generic, Eq)
 
@@ -65,11 +70,6 @@ data Matcher
       }
   deriving (Show, Generic, Eq)
 
-matcherType :: T.Text -> T.Text
-matcherType "embed" = "embed"
-matcherType "message" = "message"
-matcherType _ = error "invalid tag type"
-
 -- deriving a parser for the yaml data
 deriveJSON
   defaultOptions
@@ -81,16 +81,18 @@ deriveJSON
     }
   ''Matcher
 
--- instance FromJSON Matcher where
---   parseJSON = generic
-
 -- | Reads all detections for a single bot from a file
 readConfigFile :: FilePath -> IO (Either ParseException BotConfig)
 readConfigFile = decodeFileEither
 
+isYamlFile :: T.Text -> Bool
+isYamlFile name = any (`T.isSuffixOf` name) yamlSuffixes
+  where
+    yamlSuffixes = ["yaml", "yml"]
+
 -- | Filepaths containing all detections
 allDetections :: IO [FilePath]
-allDetections = getDirectoryContents "./detections"
+allDetections = map ("./detections" </>) . filter (isYamlFile . T.pack) <$> getDirectoryContents "./detections"
 
 -- | Gets the configuration of all bot configuration
 -- | Fails on the first incorrectly formatted config
@@ -103,3 +105,6 @@ catEithers (x : xs) = do
   existing <- x
   next <- catEithers xs
   return (existing : next)
+
+prettyPrintMatcher :: Matcher -> T.Text
+prettyPrintMatcher = decodeUtf8 . encode
