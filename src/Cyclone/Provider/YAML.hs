@@ -74,6 +74,7 @@ data Matcher
 deriveJSON
   defaultOptions
     { sumEncoding = defaultTaggedObject {tagFieldName = "type"},
+      omitNothingFields = True,
       constructorTagModifier = \case
         "EmbedMatcher" -> "embed"
         "MessageMatcher" -> "message"

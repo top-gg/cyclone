@@ -46,14 +46,16 @@ onMessageCreate configs m = do
       let botName = name (config :: BotConfig)
       liftIO $ print config
       let detectionString = prettyPrintMatcher (matcher detection)
+      let author = messageAuthor m
       let channelId = messageChannel m
+      let declineLink = "https://top.gg/moderation/decline?id=" <> T.pack (show $ userId author) <> "&" <> "reason=clone|" <> botName
       let reply =
             R.CreateMessageDetailed channelId $
               def
                 { messageDetailedReference =
                     Just $ def {referenceMessageId = Just $ messageId m},
                   messageDetailedContent =
-                    "This message matches the detection `" <> detectionName <> "` of `" <> botName <> "`:\n```yaml\n" <> detectionString <> "\n```"
+                    "This message matches the detection `" <> detectionName <> "` of `" <> botName <> "`:\n```yaml\n" <> detectionString <> "\n```\n**Decline Link:** " <> declineLink
                 }
       _ <- restCall reply
       pure ()
