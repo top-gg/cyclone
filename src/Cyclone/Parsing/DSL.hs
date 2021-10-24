@@ -1,6 +1,6 @@
 {-# OPTIONS_GHC -Wno-unused-top-binds #-}
 
-module Cyclone.Parsing.DSL (parseDsl, dslParser, innerLoop) where
+module Cyclone.Parsing.DSL (parseDsl, extractTemplatableVariable, dslParser) where
 
 import Control.Monad (void)
 import Cyclone.Parsing.Data (DSL (..), LabeledVariable (Emoji, Wildcard), Parser)
@@ -17,6 +17,7 @@ import Text.Megaparsec
     (<|>),
   )
 import Text.Megaparsec.Char (char, space, string)
+import Text.Megaparsec.Debug
 
 variable :: Parser p -> Parser p
 variable = between leftBracket rightBracket
@@ -25,7 +26,7 @@ parseMaybeLabel :: Parser (Maybe T.Text)
 parseMaybeLabel =
   -- TODO: This is very hacky lol this parser should not have to know about the delimiters outside its own scope like '}'
   let name = takeWhileP Nothing (\e -> e /= ':' && e /= '}')
-   in optional $ try (name <* char ':' <* space)
+   in optional $ try (name <* char ':' <* try space)
 
 listParser :: Parser LabeledVariable
 listParser = do
@@ -46,9 +47,6 @@ wildcard = Wildcard <$ string "?"
 expression :: Parser DSL
 expression = variable (try (withLabel emoji) <|> try (withLabel wildcard))
 
-innerLoop :: Parser [DSL]
-innerLoop = dslParser
-
 dslContent :: Parser a -> Parser [DSL]
 dslContent = manyTill (loop <|> expression <|> plainText)
 
@@ -58,7 +56,7 @@ loop = do
   -- skip optional whitespace around the loop contents
   -- TODO: Move this eager space gobbling to `Cyclone.Parsing.Token.skipSpaces`
   space
-  content <- dslContent (lookAhead . try $ space *> loopMarker)
+  content <- dbg "content" $ dslContent (lookAhead . try $ loopMarker)
   space
   void loopMarker
   return $ Loop content
@@ -74,4 +72,8 @@ dslParser = dslContent eof
 -- | Turns a YAML text input into a parser.
 -- | Strips all whitespace from the input.
 parseDsl :: T.Text -> Either (ParseErrorBundle T.Text Void) [DSL]
-parseDsl text = parse dslParser "" (T.strip text)
+parseDsl text = parse dslParser "" (T.stripStart text)
+
+extractTemplatableVariable :: DSL -> Maybe T.Text
+extractTemplatableVariable (Labeled _ (Just key)) = return key
+extractTemplatableVariable _ = Nothing

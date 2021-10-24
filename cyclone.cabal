@@ -31,6 +31,7 @@ common shared-properties
     Cyclone.Helper
 
   default-extensions:
+    BlockArguments,
     OverloadedStrings,
     RecordWildCards,
     LambdaCase,

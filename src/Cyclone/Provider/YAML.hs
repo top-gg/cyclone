@@ -10,16 +10,15 @@ module Cyclone.Provider.YAML
     Detection (..),
     Matcher (..),
     DefaultTypes (..),
+    DefaultDeclaredVariables,
   )
 where
 
 import Data.Aeson.TH
-import Data.List (isSuffixOf)
 import qualified Data.Map as M
 import qualified Data.Text as T
 import Data.Text.Encoding (decodeUtf8)
 import Data.Yaml
-import Debug.Trace (traceIO, traceShowId)
 import GHC.Generics (Generic)
 import System.FilePath
 import UnliftIO.Directory
@@ -30,8 +29,6 @@ instance Show Platform where
   show = \case
     Discord -> "discord"
 
-instance FromJSON Platform
-
 data BotConfig = BotConfig
   { name :: T.Text,
     platform :: Maybe Platform,
@@ -40,24 +37,20 @@ data BotConfig = BotConfig
   }
   deriving (Show, Generic, Eq)
 
-instance FromJSON BotConfig
+type DefaultDeclaredVariables = M.Map T.Text DefaultTypes
 
 data Detection = Detection
   { name :: T.Text,
     input :: Maybe T.Text,
     matcher :: Matcher,
-    defaults :: Maybe (M.Map T.Text DefaultTypes)
+    defaults :: Maybe DefaultDeclaredVariables
   }
   deriving (Show, Generic, Eq)
-
-instance FromJSON Detection
 
 data DefaultTypes
   = Value T.Text
   | Values [T.Text]
   deriving (Show, Generic, Eq)
-
-instance FromJSON DefaultTypes
 
 data Matcher
   = EmbedMatcher
@@ -81,6 +74,17 @@ deriveJSON
         _ -> error "invalid tag name"
     }
   ''Matcher
+
+deriveJSON
+  defaultOptions
+    { sumEncoding = UntaggedValue,
+      omitNothingFields = True
+    }
+  ''DefaultTypes
+
+deriveJSON defaultOptions ''Platform
+deriveJSON defaultOptions ''BotConfig
+deriveJSON defaultOptions ''Detection
 
 -- | Reads all detections for a single bot from a file
 readConfigFile :: FilePath -> IO (Either ParseException BotConfig)

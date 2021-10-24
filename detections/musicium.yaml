@@ -2,10 +2,19 @@ name: Musicium
 link: https://github.com/Tomato6966/Musicium
 detections:
   - name: Help command
-    input: "{prefix}help"
+    # input: "{prefix}help"
     matcher:
       type: embed
       # prefix matchers with {?} to ignore text preceding the one being matched
       description: |
         {?}
-        > Check out the [**Dashboard**]({dashboardUrl: ?}) or the [**Live Music Queue**]({queueUrl: ?})
+        > Check out the [**{dashboardName: ?}**]({dashboardUrl: ?}) or the [**{musicQueueName: ?}**]({queueUrl: ?})
+    defaults:
+      dashboardName: Mashboard
+      dashboardUrl: https://Musicium.oxytomato.repl.co/dashboard/333949691962195969
+      musicQueueName: Live Music Queue
+      queueUrl: https://Musicium.oxytomato.repl.co/queue/333949691962195969
+  # - name: Help command (OLD)
+  #   matcher:
+  #     type: embed
+  #     description: Invite me with Slash Commands Permissions, cause all of my Commands are available as Slash Commands too!

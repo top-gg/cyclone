@@ -6,8 +6,10 @@ import Cyclone.Parsing.Data
 import Cyclone.Parsing.Parser
 import Data.Either
 import Data.List
-import qualified Data.Text as T
+import System.Exit (exitFailure)
 import Test.Hspec (Spec, describe, it, shouldBe, shouldSatisfy)
+import Text.Megaparsec (errorBundlePretty)
+import Text.Megaparsec.Error (errorBundlePretty)
 
 unwrap = fromRight (error "")
 
@@ -51,7 +53,7 @@ spec = describe "Parser generator" $ do
     -- leading and trailing slashes to simulate a YAML file read
     let rawDsl = "\n{?}\n> Check out the [**Dashboard**]({?}) or the [**Live Music Queue**]({?})\n"
     let out = unwrap (parseDsl rawDsl)
-    parseMessageContent out (T.strip content) `shouldSatisfy` isRight
+    parseMessageContent out content `shouldSatisfy` isRight
 
   it "should extract wildcards from matched commands" $ do
     let content = "This is (a help command) with some (interesting patterns)"
@@ -60,3 +62,19 @@ spec = describe "Parser generator" $ do
     let out = unwrap (parseDsl rawDsl)
     extractVariables (unwrap $ parseMessageContent out content)
       `shouldBe` [("first", "a help command"), ("second", "interesting patterns")]
+
+  it "should match discord musicbot embed" do
+    let content = "`>bassboost <none|low|medium|high>` - Enables bass boosting audio effect\n`>youtube` - Starts a YouTube Together session\n\n\nDiscord Music Bot Version: v4.1.2\n[\10024 Support Server](https://discord.gg/sbySMS7m3v) | [GitHub](https://github.com/SudhanPlayz/Discord-MusicBot) | [Dashboard](http://localhost) | By [SudhanPlayz](https://github.com/SudhanPlayz)"
+    let rawDsl =
+          "@loop\n\
+          \`>{commandName: ?}` - {?}\n\
+          \@loop\n\
+          \\n\
+          \Discord Music Bot Version: {version: ?}\n\
+          \{?}"
+    let out = unwrap $ parseDsl rawDsl
+    print out
+    case parseMessageContent out content of
+      Left a -> do
+        putStrLn (errorBundlePretty a)
+      Right a -> print a >> exitFailure

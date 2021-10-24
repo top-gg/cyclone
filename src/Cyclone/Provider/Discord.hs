@@ -7,8 +7,7 @@ import Cyclone.Parsing.DSL (parseDsl)
 import Cyclone.Parsing.Data
 import Cyclone.Parsing.Parser
 import Cyclone.Provider.YAML
-import Data.List (find)
-import Data.Maybe
+import qualified Data.Map as M
 import qualified Data.Text as T
 import qualified Data.Text.IO as TIO
 import Discord
@@ -44,6 +43,7 @@ onMessageCreate :: [BotConfig] -> Message -> DiscordHandler ()
 onMessageCreate configs message = do
   let user = messageAuthor message
   when (userIsBot user) $ do
+    liftIO $ print (messageEmbeds message)
     checkForClones configs message
 
 checkForClones :: [BotConfig] -> Message -> DiscordHandler ()
@@ -66,7 +66,7 @@ checkForClones configs m =
                 "\n",
                 codeblock "yaml" detectionString,
                 "\n",
-                flattenMonoid (buildVariableList matchedVariables),
+                flattenMonoid (buildVariableList matchedVariables (defaults matchedDetection)),
                 flattenMonoid (buildSourceLink <$> link matchedConfig),
                 buildDeclineLink (userId author) botName
               ]
@@ -86,18 +86,49 @@ buildDeclineLink :: Snowflake -> T.Text -> T.Text
 buildDeclineLink botId botName =
   "**Decline Link:** <https://top.gg/moderation/decline?id=" <> T.pack (show botId) <> "&" <> "reason=clone--" <> botName <> ">\n"
 
-buildVariableList :: [EmbeddedVariable] -> Maybe T.Text
-buildVariableList [] = Nothing
-buildVariableList vars =
-  return . mconcat $
-    [ "**Captured Wildcards (",
-      T.pack (show $ length vars),
-      ")**\n",
-      codeblock "yaml" . T.intercalate "\n" $ map line vars,
-      "\n"
-    ]
+-- I'm sorry for the war crimes committed in this function
+buildVariableList :: [EmbeddedVariable] -> Maybe DefaultDeclaredVariables -> Maybe T.Text
+buildVariableList [] _ = Nothing
+buildVariableList vars maybeMap =
+  return . mconcat $ case maybeMap of
+    Just defaults ->
+      [header (Just defaults), variableList (Just defaults), "\n"]
+    Nothing ->
+      [ header Nothing,
+        variableList Nothing,
+        "\n"
+      ]
   where
-    line (key, value) = key <> ": " <> value
+    varList = M.fromList vars
+    identicalVariables defaults =
+      map fst $ filter go (M.toList defaults)
+      where
+        go (key, Value value) = Just value == M.lookup key varList
+        go (_, _) = False
+    checkValueMatch (Value expected) input
+      | expected == input = "# ⚠️ Identical with source\n"
+      | otherwise = "# Source uses: \"" <> expected <> "\"\n"
+    checkValueMatch _ _ = ""
+    line Nothing (key, value) = mconcat [key, ": ", value]
+    line (Just defaults) (key, value) =
+      case M.lookup key defaults of
+        Nothing -> mconcat [key, ": ", value]
+        Just expected -> mconcat [checkValueMatch expected value, key, ": ", value]
+    header maybeDefaults =
+      case maybeDefaults of
+        Nothing -> sharedHeader <> "\n"
+        Just defaults ->
+          -- intersecting the 2 maps lists to make sure we only take into
+          -- account variables declared in both the DSL and the defaults when
+          -- calculating the difference between supplied and defaulted variables
+          let commons = M.intersection defaults varList
+              identicalCount = length . identicalVariables $ commons
+              changedCount = length commons - identicalCount
+           in if changedCount == 0
+                then sharedHeader <> "\n"
+                else sharedHeader <> " (`" <> T.pack (show changedCount) <> "` changed)\n"
+    sharedHeader = "**Captured Wildcards (" <> T.pack (show $ length vars) <> ")**"
+    variableList defaults = codeblock "yaml" . T.intercalate "\n" $ map (line defaults) vars
 
 -- | Checking if a message matches a yaml detection
 findClone :: Message -> [BotConfig] -> Maybe MatchingMessage
