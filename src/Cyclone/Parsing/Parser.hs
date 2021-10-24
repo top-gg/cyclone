@@ -2,6 +2,7 @@ module Cyclone.Parsing.Parser where
 
 import Cyclone.Parsing.Data
   ( DSL (..),
+    EmbeddedVariable,
     LabeledVariable (..),
     ParsedMessage (ParsedMessage),
     Parser,
@@ -75,3 +76,8 @@ type ParseResult = Either (ParseErrorBundle T.Text Void) [ParsedMessage]
 -- | Parser to also ignore the same whitespace restrictions
 parseMessageContent :: [DSL] -> T.Text -> ParseResult
 parseMessageContent dsl message = parse (dslToParser dsl) "" (T.strip message)
+
+extractVariables :: [ParsedMessage] -> [EmbeddedVariable]
+extractVariables (ParsedMessage (Labeled _ (Just key)) value : xs) = (key, value) : extractVariables xs
+extractVariables (_ : xs) = extractVariables xs
+extractVariables [] = []

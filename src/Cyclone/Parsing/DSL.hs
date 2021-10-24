@@ -23,7 +23,8 @@ variable = between leftBracket rightBracket
 
 parseMaybeLabel :: Parser (Maybe T.Text)
 parseMaybeLabel =
-  let name = takeWhileP Nothing (/= ':')
+  -- TODO: This is very hacky lol this parser should not have to know about the delimiters outside its own scope like '}'
+  let name = takeWhileP Nothing (\e -> e /= ':' && e /= '}')
    in optional $ try (name <* char ':' <* space)
 
 listParser :: Parser LabeledVariable

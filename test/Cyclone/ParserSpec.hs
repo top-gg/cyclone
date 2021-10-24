@@ -9,6 +9,8 @@ import Data.List
 import qualified Data.Text as T
 import Test.Hspec (Spec, describe, it, shouldBe, shouldSatisfy)
 
+unwrap = fromRight (error "")
+
 spec :: Spec
 spec = describe "Parser generator" $ do
   let emoji = Labeled Emoji Nothing
@@ -48,5 +50,13 @@ spec = describe "Parser generator" $ do
     let content = "**[Invite me with __Slash Commands__ Permissions](https://discord.com/api/oauth2/authorize?client_id=892341258503217163&permissions=8&scope=bot%20applications.commands), cause all of my Commands are available as Slash Commands too!**\n\n> Check out the [**Dashboard**](https://Musicium.oxytomato.repl.co/dashboard/333949691962195969) or the [**Live Music Queue**](https://Musicium.oxytomato.repl.co/queue/333949691962195969)"
     -- leading and trailing slashes to simulate a YAML file read
     let rawDsl = "\n{?}\n> Check out the [**Dashboard**]({?}) or the [**Live Music Queue**]({?})\n"
-    let out = fromRight (error "") (parseDsl rawDsl)
+    let out = unwrap (parseDsl rawDsl)
     parseMessageContent out (T.strip content) `shouldSatisfy` isRight
+
+  it "should extract wildcards from matched commands" $ do
+    let content = "This is (a help command) with some (interesting patterns)"
+    -- leading and trailing slashes to simulate a YAML file read
+    let rawDsl = "This is ({first: ?}) with some ({second: ?})"
+    let out = unwrap (parseDsl rawDsl)
+    extractVariables (unwrap $ parseMessageContent out content)
+      `shouldBe` [("first", "a help command"), ("second", "interesting patterns")]

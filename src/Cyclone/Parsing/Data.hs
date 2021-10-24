@@ -13,6 +13,8 @@ data LabeledVariable
   | List {delimiter :: T.Text, pattern :: T.Text}
   deriving (Eq)
 
+type EmbeddedVariable = (T.Text, T.Text)
+
 data DSL
   = PlainText T.Text
   | Loop [DSL]

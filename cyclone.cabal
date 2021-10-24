@@ -35,6 +35,7 @@ common shared-properties
     RecordWildCards,
     LambdaCase,
     NamedFieldPuns,
+    TupleSections,
     DuplicateRecordFields
 
   build-depends:

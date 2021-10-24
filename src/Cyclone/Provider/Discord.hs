@@ -4,6 +4,7 @@ import Control.Monad
 import Control.Monad.IO.Class
 import Cyclone.Helper
 import Cyclone.Parsing.DSL (parseDsl)
+import Cyclone.Parsing.Data
 import Cyclone.Parsing.Parser
 import Cyclone.Provider.YAML
 import Data.List (find)
@@ -16,6 +17,12 @@ import qualified Discord.Requests as R
 import Discord.Types hiding (Emoji)
 
 data DiscordContext = DiscordContext {token :: T.Text, configs :: [BotConfig]}
+
+data MatchingMessage = MatchingMessage
+  { matchedConfig :: BotConfig,
+    matchedDetection :: Detection,
+    matchedVariables :: [EmbeddedVariable]
+  }
 
 runDiscordBot :: DiscordContext -> IO ()
 runDiscordBot DiscordContext {..} = do
@@ -43,11 +50,11 @@ checkForClones :: [BotConfig] -> Message -> DiscordHandler ()
 checkForClones configs m =
   case findClone m configs of
     Nothing -> pure ()
-    Just (config, detection) -> do
-      let detectionName = name (detection :: Detection)
-      let botName = name (config :: BotConfig)
-      liftIO $ print config
-      let detectionString = prettyPrintMatcher (matcher detection)
+    Just MatchingMessage {matchedDetection, matchedConfig, matchedVariables} -> do
+      let detectionName = name (matchedDetection :: Detection)
+      let botName = name (matchedConfig :: BotConfig)
+      liftIO $ print matchedConfig
+      let detectionString = prettyPrintMatcher (matcher matchedDetection)
       let author = messageAuthor m
       let channelId = messageChannel m
       let content =
@@ -59,7 +66,8 @@ checkForClones configs m =
                 "\n",
                 codeblock "yaml" detectionString,
                 "\n",
-                flattenMonoid (buildSourceLink <$> link config),
+                flattenMonoid (buildVariableList matchedVariables),
+                flattenMonoid (buildSourceLink <$> link matchedConfig),
                 buildDeclineLink (userId author) botName
               ]
       let reply =
@@ -75,42 +83,61 @@ buildSourceLink :: T.Text -> T.Text
 buildSourceLink link = "**Source Link:** <" <> link <> ">\n"
 
 buildDeclineLink :: Snowflake -> T.Text -> T.Text
-buildDeclineLink botId botName = "**Decline Link:** <https://top.gg/moderation/decline?id=" <> T.pack (show botId) <> "&" <> "reason=clone--" <> botName <> ">\n"
+buildDeclineLink botId botName =
+  "**Decline Link:** <https://top.gg/moderation/decline?id=" <> T.pack (show botId) <> "&" <> "reason=clone--" <> botName <> ">\n"
+
+buildVariableList :: [EmbeddedVariable] -> Maybe T.Text
+buildVariableList [] = Nothing
+buildVariableList vars =
+  return . mconcat $
+    [ "**Captured Wildcards (",
+      T.pack (show $ length vars),
+      ")**\n",
+      codeblock "yaml" . T.intercalate "\n" $ map line vars,
+      "\n"
+    ]
+  where
+    line (key, value) = key <> ": " <> value
 
 -- | Checking if a message matches a yaml detection
-findClone :: Message -> [BotConfig] -> Maybe (BotConfig, Detection)
+findClone :: Message -> [BotConfig] -> Maybe MatchingMessage
 findClone _ [] = Nothing
 findClone m (config : configs) =
   case matchConfig m config of
     Nothing -> findClone m configs
-    Just detection -> Just (config, detection)
+    Just (matchedDetection, matchedVariables) ->
+      return
+        MatchingMessage {matchedConfig = config, matchedVariables, matchedDetection}
 
-matchConfig :: Message -> BotConfig -> Maybe Detection
-matchConfig m BotConfig {detections} = find (matchesMessage m . matcher) detections
+matchConfig :: Message -> BotConfig -> Maybe (Detection, [EmbeddedVariable])
+matchConfig m BotConfig {detections} =
+  let predicate detection = (detection,) <$> matchesMessage m (matcher detection)
+   in findMap predicate detections
 
 -- | Whether a message matches either an embed or a text content.
 -- | All embed fields must match in order to be considered fully matching.
-matchesMessage :: Message -> Matcher -> Bool
+matchesMessage :: Message -> Matcher -> Maybe [EmbeddedVariable]
 matchesMessage m matcher =
   case (messageEmbeds m, messageText m, matcher) of
     -- Matching all fields of an embed, text content is ignored if an embed is present
     -- since embed and content matching are mutually exclusive configurations
     (embeds, _, EmbedMatcher {..}) ->
-      any (\embed -> all (isEmbedFieldMatching embed) checkedEmbedFields) embeds
+      let maybeVariables = findMap (\embed -> findMap (isEmbedFieldMatching embed) checkedEmbedFields) embeds
+       in extractVariables <$> maybeVariables
       where
         -- TODO: match on all embed fields
         checkedEmbedFields = [\e -> (description, embedDescription e)]
-        isEmbedFieldMatching :: Embed -> (Embed -> (Maybe T.Text, Maybe T.Text)) -> Bool
+        isEmbedFieldMatching :: Embed -> (Embed -> (Maybe T.Text, Maybe T.Text)) -> Maybe [ParsedMessage]
         isEmbedFieldMatching embed fetcher = uncurry runEmbedField (fetcher embed)
-    (_, text, MessageMatcher {..}) -> isJust $ do
+    (_, text, MessageMatcher {..}) -> do
       a <- eitherToMaybe $ parseDsl content
       -- if the parse result is `Right [ParsedMessage]` it must have succeeded parsing
-      _ <- eitherToMaybe $ parseMessageContent a text
-      return True
+      result <- eitherToMaybe $ parseMessageContent a text
+      return $ extractVariables result
   where
     -- Runs one parser against one field field of the embed
-    runEmbedField :: Maybe T.Text -> Maybe T.Text -> Bool
-    runEmbedField rawDsl f = isJust $ do
+    runEmbedField :: Maybe T.Text -> Maybe T.Text -> Maybe [ParsedMessage]
+    runEmbedField rawDsl f = do
       -- TODO: don't silently ignore errors converting a raw string to a DSL?
       -- TODO: create parsers once on startup instead of recreating them for every embed check
       parser <- eitherToMaybe . parseDsl =<< rawDsl
