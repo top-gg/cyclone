@@ -22,7 +22,8 @@ spec = describe "YAML Parser" $ do
                 EmbedMatcher
                   { title = Just "Welcome to my help menu, here are my commands",
                     description = Just description,
-                    footer = Nothing
+                    footer = Nothing,
+                    fields = Nothing
                   },
               defaults = Nothing
             }

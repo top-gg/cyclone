@@ -39,7 +39,7 @@ spec = describe "DSL Parser" $ do
             \@loop\n\
             \{emoji} **{?}** {emoji}\n\
             \@loop"
-    result `shouldBe` Right [PlainText "Help:\n", Loop surroundedWilcardDsl]
+    result `shouldBe` Right [PlainText "Help:\n", Loop (surroundedWilcardDsl ++ [PlainText "\n"])]
 
 -- it "Should parse complex loops" $ do
 --   let result =

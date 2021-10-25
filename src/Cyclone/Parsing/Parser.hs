@@ -14,12 +14,14 @@ import qualified Data.Text as T
 import Data.Void (Void)
 import Debug.Trace (traceShowId)
 import Text.Megaparsec
-  ( MonadParsec (lookAhead, takeWhileP, try),
+  ( MonadParsec (eof, lookAhead, takeWhileP, try),
     ParseErrorBundle,
     anySingle,
     many,
     manyTill,
     parse,
+    satisfy,
+    skipMany,
     (<|>),
   )
 import Text.Megaparsec.Char (alphaNumChar, char, space, string)
@@ -48,12 +50,22 @@ listParser :: T.Text -> T.Text -> Parser T.Text
 listParser _delimiter _pattern = do
   undefined
 
+skipSpaceCharacters :: Parser ()
+skipSpaceCharacters = skipMany (char ' ')
+
 -- | Convert a list of `DSL` tokens into `ParsedMessage` by passing
 -- | the remaining list of tokens that are yet to be parsed
 fromDsl :: Bool -> [DSL] -> DSL -> Parser [ParsedMessage]
 fromDsl insideLoop next = \case
   Loop content ->
-    (join <$> manyTill (dslToParser content True) ((dslToParser next True)))
+    -- if there's nothing else after the loop we should be trying to match
+    -- the loop parser until the end of the input
+    let nextParser =
+          case next of
+            [] -> [] <$ eof
+            _ -> dslToParser next True
+        tryNextParserInLine = lookAhead $ try nextParser
+     in (join <$> manyTill (dslToParser content True) tryNextParserInLine)
   t@(Labeled List {delimiter, pattern} _) ->
     return . ParsedMessage t <$> listParser delimiter pattern
   t@(Labeled Emoji _) ->
@@ -64,8 +76,12 @@ fromDsl insideLoop next = \case
     let wildcard = manyTill anySingle remainingInput
     return . ParsedMessage t . T.pack <$> wildcard
   t@(PlainText text) ->
-    -- Very hacky way to make sure we don't gobble sensitive spaces when we're inside a loop
-    return . ParsedMessage t <$> if insideLoop then string text else skipSpaces (string text)
+    -- Sometimes bot embeds do their newlines like "\n  " or "\n My commands" for no reason
+    -- These need to be consumed automatically before the plaintext itself is consumed in order not to fail
+    let baseParser = traverse (\e -> if e == '\n' then skipSpaceCharacters *> char e <* skipSpaceCharacters else char e) $ T.unpack text
+        parser = if insideLoop then baseParser else skipSpaces baseParser
+     in -- Very hacky way to make sure we don't gobble sensitive spaces when we're inside a loop
+        return . ParsedMessage t . T.pack <$> parser
 
 dslToParser :: [DSL] -> Bool -> Consumer
 dslToParser [] _ = mempty

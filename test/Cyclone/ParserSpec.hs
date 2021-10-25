@@ -13,6 +13,11 @@ import Text.Megaparsec.Error (errorBundlePretty)
 
 unwrap = fromRight (error "")
 
+printFailure result =
+  case result of
+    Right _ -> putStrLn ""
+    Left a -> putStrLn $ errorBundlePretty a
+
 spec :: Spec
 spec = describe "Parser generator" $ do
   let emoji = Labeled Emoji Nothing
@@ -53,7 +58,11 @@ spec = describe "Parser generator" $ do
     -- leading and trailing slashes to simulate a YAML file read
     let rawDsl = "\n{?}\n> Check out the [**Dashboard**]({?}) or the [**Live Music Queue**]({?})\n"
     let out = unwrap (parseDsl rawDsl)
-    parseMessageContent out content `shouldSatisfy` isRight
+    let result = parseMessageContent out content
+    -- case result of
+    --   Right _ -> print "a"
+    --   Left a -> putStrLn $ errorBundlePretty a
+    result `shouldSatisfy` isRight
 
   it "should extract wildcards from matched commands" $ do
     let content = "This is (a help command) with some (interesting patterns)"
@@ -64,17 +73,30 @@ spec = describe "Parser generator" $ do
       `shouldBe` [("first", "a help command"), ("second", "interesting patterns")]
 
   it "should match discord musicbot embed" do
-    let content = "`>bassboost <none|low|medium|high>` - Enables bass boosting audio effect\n`>youtube` - Starts a YouTube Together session\n\n\nDiscord Music Bot Version: v4.1.2\n[\10024 Support Server](https://discord.gg/sbySMS7m3v) | [GitHub](https://github.com/SudhanPlayz/Discord-MusicBot) | [Dashboard](http://localhost) | By [SudhanPlayz](https://github.com/SudhanPlayz)"
+    let content = "`>bassboost <none|low|medium|high>` - Enables bass boosting audio effect\n`>bump` - Moves a track to the front of the queue.\n`>clear` - Clears the server queue\n`>config` - Edit the bot settings\n`>disconnect` - Stop the music and leave the voice channel\n`>grab` - Saves the current song to your Direct Messages\n`>help [command]` - Information about the bot\n`>invite` - To invite me to your server\n`>loop` - Loop the current song\n`>loopqueue` - Loop the whole queue\n`>lyrics [Song Name]` - Shows the lyrics of the song searched\n`>move` - Moves a track to a specified position.\n`>nowplaying` - See what song is currently playing\n`>pause` - Pauses the music\n`>play [song]` - Play your favorite songs\n`>queue` - Shows all currently enqueued songs\n`>remove [number]` - Remove a song from the queue\n`>resume` - Resumes the music\n`>search [song]` - Shows a result of songs based on the search query\n`>seek <time s/m/h>` - Seek to a position in the song\n`>shuffle` - Shuffles the queue\n`>skip` - Skip the current song\n`>skipto <number>` - Skip to a song in the queue\n`>stats` - Get information about the bot\n`>volume <volume>` - Check or change the current volume\n`>youtube` - Starts a YouTube Together session\n \n Discord Music Bot Version: v4.1.2\n  [\10024 Support Server](https://discord.gg/sbySMS7m3v) | [GitHub](https://github.com/SudhanPlayz/Discord-MusicBot) | [Dashboard](http://localhost) | By [SudhanPlayz](https://github.com/SudhanPlayz)"
+    -- let content = "`>bassboost <none|low|medium|high>` - Enables bass boosting audio effect\n`>youtube` - Starts a YouTube Together session\n\nDiscord Music Bot Version: v4.1.2\n[\10024 Support Server](https://discord.gg/sbySMS7m3v) | [GitHub](https://github.com/SudhanPlayz/Discord-MusicBot) | [Dashboard](http://localhost) | By [SudhanPlayz](https://github.com/SudhanPlayz)"
     let rawDsl =
           "@loop\n\
           \`>{commandName: ?}` - {?}\n\
           \@loop\n\
-          \\n\
           \Discord Music Bot Version: {version: ?}\n\
           \{?}"
     let out = unwrap $ parseDsl rawDsl
     print out
-    case parseMessageContent out content of
-      Left a -> do
-        putStrLn (errorBundlePretty a)
-      Right a -> print a >> exitFailure
+    let result = parseMessageContent out content
+
+    printFailure result
+    result `shouldSatisfy` isRight
+
+--  TODO: single loop statements don't work for some reason
+-- it "it should match a single loop statement" do
+--   let content = "`>bassboost <none|low|medium|high>` - Enables bass boosting audio effect\n`>youtube` - Starts a YouTube Together session\n"
+--   let rawDsl =
+--         "@loop\n\
+--         \`>{commandName: ?}` - {?}\n\
+--         \@loop\n"
+--   let out = unwrap $ parseDsl rawDsl
+--   print out
+--   let result = parseMessageContent (out) content
+--   printFailure result
+--   result `shouldSatisfy` isRight

@@ -8,7 +8,6 @@ detections:
         @loop
         `>{commandName: ?}` - {?}
         @loop
-
         Discord Music Bot Version: {version: ?}
         {?}
     defaults:

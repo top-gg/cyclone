@@ -56,7 +56,7 @@ loop = do
   -- skip optional whitespace around the loop contents
   -- TODO: Move this eager space gobbling to `Cyclone.Parsing.Token.skipSpaces`
   space
-  content <- dbg "content" $ dslContent (lookAhead . try $ loopMarker)
+  content <- dslContent (lookAhead . try $ loopMarker)
   space
   void loopMarker
   return $ Loop content
@@ -72,7 +72,7 @@ dslParser = dslContent eof
 -- | Turns a YAML text input into a parser.
 -- | Strips all whitespace from the input.
 parseDsl :: T.Text -> Either (ParseErrorBundle T.Text Void) [DSL]
-parseDsl text = parse dslParser "" (T.stripStart text)
+parseDsl text = parse dslParser "" (T.strip text)
 
 extractTemplatableVariable :: DSL -> Maybe T.Text
 extractTemplatableVariable (Labeled _ (Just key)) = return key

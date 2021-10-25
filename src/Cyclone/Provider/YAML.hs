@@ -52,11 +52,18 @@ data DefaultTypes
   | Values [T.Text]
   deriving (Show, Generic, Eq)
 
+data FieldMatcher = FieldMatcher
+  { title :: Maybe T.Text,
+    description :: Maybe T.Text
+  }
+  deriving (Show, Generic, Eq)
+
 data Matcher
   = EmbedMatcher
       { title :: Maybe T.Text,
         description :: Maybe T.Text,
-        footer :: Maybe T.Text
+        footer :: Maybe T.Text,
+        fields :: Maybe FieldMatcher
       }
   | MessageMatcher
       { content :: T.Text
@@ -83,6 +90,7 @@ deriveJSON
   ''DefaultTypes
 
 deriveJSON defaultOptions ''Platform
+deriveJSON defaultOptions ''FieldMatcher
 deriveJSON defaultOptions ''BotConfig
 deriveJSON defaultOptions ''Detection
 

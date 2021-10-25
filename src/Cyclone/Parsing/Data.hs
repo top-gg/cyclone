@@ -31,7 +31,7 @@ instance Show DSL where
     Labeled Wildcard w -> showLabeled w "?"
     -- TODO: show list contents?
     Labeled (List _ _) w -> showLabeled w "List [" <> "]"
-    PlainText text -> T.unpack $ "PlainText: \"" <> text <> "\""
+    PlainText text -> T.unpack $ "PlainText: \"" <> T.replace "\n" "<newline>" text <> "\""
     Loop sections -> "Loop: [" <> intercalate ", " (map show sections) <> "]"
 
 data Emoji

@@ -9,8 +9,12 @@ detections:
       description: |
         {?}
         > Check out the [**{dashboardName: ?}**]({dashboardUrl: ?}) or the [**{musicQueueName: ?}**]({queueUrl: ?})
+      # Not yet implemented
+      fields:
+        title: "**{category: ?} [{commandCount: ?}]**"
+        content: "> {commands: @list(',', '`?`')}"
     defaults:
-      dashboardName: Mashboard
+      dashboardName: Dashboard
       dashboardUrl: https://Musicium.oxytomato.repl.co/dashboard/333949691962195969
       musicQueueName: Live Music Queue
       queueUrl: https://Musicium.oxytomato.repl.co/queue/333949691962195969
