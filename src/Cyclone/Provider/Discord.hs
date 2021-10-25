@@ -106,7 +106,7 @@ buildVariableList vars maybeMap =
         go (key, Value value) = Just value == M.lookup key varList
         go (_, _) = False
     checkValueMatch (Value expected) input
-      | expected == input = "# ⚠️ Identical with source\n"
+      | expected == input = "# ⚠️ Identical to source\n"
       | otherwise = "# Source uses: \"" <> expected <> "\"\n"
     checkValueMatch _ _ = ""
     line Nothing (key, value) = mconcat [key, ": ", value]
