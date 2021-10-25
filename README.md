@@ -13,8 +13,6 @@ A pattern matching framework for detecting lazy clones of popular open source bo
 
 ## Declaring patterns
 
-_WIP_
-
 Adding new patterns is as simple as creating a new yaml file under `/detections`
 
 ```yaml
@@ -104,16 +102,18 @@ will match message content like
 - `name`: `string` - A unique name for the detection
 - `input`: `string?` - The command that that triggers the detection. (For example `{prefix}help`)
 - `defaults`: `Default? | Default[]?` - Values that describe the variables for what the original bot sends in its messages.
-- `*`: `EmbedMatcher | MessageMatcher` - Either an embed or message matcher in the same object
+- `matcher`: `EmbedMatcher | MessageMatcher` - Either an embed or message matcher in the same object
 
 ### `EmbedMatcher`
 
+- `type`: `"embed"` - Define the type of the matcher
 - `title`: `pattern?` - An title to match the embed against. Supports custom pattern syntax.
 - `description`: `pattern?` - A description to match the embed against. Supports custom pattern syntax.
 - `footer`: `pattern?` - A footer to match the embed against. Supports custom pattern syntax.
 
 ### `MessageMatcher`
 
+- `type`: `"message"` - Define the type of the matcher
 - `content`: `pattern?` - Message content to match against. Supports custom pattern syntax.
 
 ### `Default`
@@ -124,8 +124,24 @@ Must be an array if values are found inside a `@loop`
 
 ```yaml
 embed:
-  title: "{emoji} Welcome: **{bot_name: ?}**"
+  title: "{emoji} Welcome: **{botName: ?}**"
   description: "Some specific message here"
 defaults:
-  bot_name: Open Source Bot
+  botName: Open Source Bot
 ```
+
+## Setting up
+
+Install the Haskell toolchain from https://www.haskell.org/ghcup/
+
+To test `cabal test`
+
+To run the bot `CYCLONE_TOKEN=your-token-here cabal run cyclone`
+
+## Why Haskell?
+
+Cyclone's job is parsing the structure of messages (most notably help messages) sent by bots. They often tend to involve a specific loop construct or recursion which either cannot be modeled by regular expressions at all, or require very complex regexes that are difficult to understand by non-developers and developers alike.
+
+Dealing with this in a flexible way requires creating our own Domain Specific Language (DSL) that is less powerful than regex, but properly models the problem we're trying to solve.
+
+Haskell is known for its expressiveness when it comes to building parsers and compilers. Libraries like [Parsec](https://hackage.haskell.org/package/parsec) and friends make the task of making a parser that generates parsers from a DSL (which is what cyclone does) _much_ simpler than it would be with a language like Javascript. It's also an overall very pleasant language to use.
