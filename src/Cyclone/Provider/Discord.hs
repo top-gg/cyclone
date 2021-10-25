@@ -6,6 +6,8 @@ import Cyclone.Helper
 import Cyclone.Parsing.DSL (parseDsl)
 import Cyclone.Parsing.Data
 import Cyclone.Parsing.Parser
+import Cyclone.Provider.DiscordCommands
+import qualified Cyclone.Provider.DiscordCommands as Commands
 import Cyclone.Provider.YAML
 import qualified Data.Map as M
 import qualified Data.Text as T
@@ -41,6 +43,7 @@ eventHandler configs = \case
 
 onMessageCreate :: [BotConfig] -> Message -> DiscordHandler ()
 onMessageCreate configs message = do
+  runCommands message
   let user = messageAuthor message
   when (userIsBot user) $ do
     liftIO $ print (messageEmbeds message)
@@ -111,9 +114,9 @@ buildVariableList vars maybeMap =
     checkValueMatch _ _ = ""
     line Nothing (key, value) = mconcat [key, ": ", value]
     line (Just defaults) (key, value) =
-      case M.lookup key defaults of
-        Nothing -> mconcat [key, ": ", value]
-        Just expected -> mconcat [checkValueMatch expected value, key, ": ", value]
+      mconcat $ case M.lookup key defaults of
+        Nothing -> [key, ": ", value]
+        Just expected -> [checkValueMatch expected value, key, ": ", value]
     header maybeDefaults =
       case maybeDefaults of
         Nothing -> sharedHeader <> "\n"

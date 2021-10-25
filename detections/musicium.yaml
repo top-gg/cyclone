@@ -2,7 +2,6 @@ name: Musicium
 link: https://github.com/Tomato6966/Musicium
 detections:
   - name: Help command
-    # input: "{prefix}help"
     matcher:
       type: embed
       # prefix matchers with {?} to ignore text preceding the one being matched
@@ -15,9 +14,7 @@ detections:
         content: "> {commands: @list(',', '`?`')}"
     defaults:
       dashboardName: Dashboard
-      dashboardUrl: https://Musicium.oxytomato.repl.co/dashboard/333949691962195969
       musicQueueName: Live Music Queue
-      queueUrl: https://Musicium.oxytomato.repl.co/queue/333949691962195969
   # - name: Help command (OLD)
   #   matcher:
   #     type: embed

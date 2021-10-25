@@ -90,7 +90,7 @@ deriveJSON
   ''DefaultTypes
 
 deriveJSON defaultOptions ''Platform
-deriveJSON defaultOptions ''FieldMatcher
+deriveJSON defaultOptions { omitNothingFields = True } ''FieldMatcher
 deriveJSON defaultOptions ''BotConfig
 deriveJSON defaultOptions ''Detection
 
