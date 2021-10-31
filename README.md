@@ -59,7 +59,7 @@ _WIP_
 `@list(delimiter, pattern)` function matches text that is separated by a `delimiter` like `,`. Useful in matching a list of commands in the form of
 
 ```
-My commands are: `theme_park`, `blackjack`, `hookers`
+My commands are: `slots`, `blackjack`, `poker`
 ```
 
 with the pattern
